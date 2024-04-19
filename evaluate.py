@@ -21,7 +21,7 @@ if __name__=="__main__":
     
     net = LSTMModel(3,4,1,2)
     args = Evaluateparaser()
-    net.load_state_dict(torch.load(f"./Models/{args.version}/net.pt", weights_only=True))
+    net.load_state_dict(torch.load(f"./Models/{args.version}/net.pt", weights_only=False))
     net.double()
     net.to(DEVICE)
     lossf = nn.CrossEntropyLoss()
@@ -29,6 +29,4 @@ if __name__=="__main__":
     test_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, "test", id, id+".pkl") for id in test_ids])
     test_loader=DataLoader(test_data, 1, shuffle=False, collate_fn=lambda x:x)
     
-    
     history = evaluate(net, test_loader,lossf, DEVICE)
-    print(history)

@@ -11,16 +11,18 @@ from utils import *
 from Network import *
 
 import os
-
+import pandas as pd
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 args = Federatedparser()
 eval_ids = os.listdir(os.path.join(args.wesad_path, "valid"))
-eval_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, "valid", id, id+".pkl") for id in eval_ids])
+eval_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, "valid", id, id+".pkl") for id in eval_ids], test_mode=args.test)
 eval_loader = DataLoader(eval_data, batch_size=1, shuffle=False, collate_fn= lambda x:x)
 lossf = nn.CrossEntropyLoss()
 net = LSTMModel(3, 4, 1, 2)
 net.double()
+if args.pretrained is not None:
+        net.load_state_dict(torch.load(args.pretrained))
 net.to(DEVICE)
 
 def set_parameters(net, parameters):
@@ -32,12 +34,15 @@ def set_parameters(net, parameters):
 def fl_evaluate(server_round:int, parameters: fl.common.NDArrays, config:Dict[str, fl.common.Scalar],)-> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
     set_parameters(net, parameters)
     history=valid(net, eval_loader, None, lossf, DEVICE)
-    save(net, f"./Models/{args.version}/net.pt")
+    save(net.state_dict(), f"./Models/{args.version}/net.pt")
     print(f"Server-side evaluation loss {history['loss']} / accuracy {history['acc']} / precision {history['precision']} / f1score {history['f1score']}")
     return history['loss'], {key:value for key, value in history.items() if key != "loss" }
     
 if __name__=="__main__":
     warnings.filterwarnings("ignore")
     make_model_folder(f"./Models/{args.version}")
-    fl.server.start_server(strategy=fl.server.strategy.FedAvg(evaluate_fn=fl_evaluate), 
+    history=fl.server.start_server(strategy=fl.server.strategy.FedAvg(evaluate_fn=fl_evaluate, inplace=False, min_fit_clients=4, min_available_clients=4, min_evaluate_clients=4), 
                            config=fl.server.ServerConfig(num_rounds=args.round))
+    plt=pd.DataFrame(history.losses_distributed, index=None)[1]
+    plt.plot().figure.savefig(f"./Plot/{args.version}_loss.png")
+    plt.to_csv(f"./Csv/{args.version}_loss.csv")

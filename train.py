@@ -92,7 +92,7 @@ if __name__=="__main__":
         net.load_state_dict(torch.load(args.pretrained, weights_only=True))
     net.double()
     net.to(DEVICE)
-    optimizer = SGD(net.parameters(), lr=1e-2)
+    optimizer = SGD(net.parameters(), lr=args.lr)
     
     print("==== LSTM 모델 ====")
     print(net)

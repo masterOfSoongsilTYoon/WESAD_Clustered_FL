@@ -9,11 +9,13 @@ from utils import *
 from Network import *
 import os
 from torch.optim import SGD
-
+import numpy as np
+import random
 class FedAvgClient(fl.client.NumPyClient):
     def __init__(self, net, train_loader, valid_loader,epoch, lossf, optimizer, DEVICE):
         super(FedAvgClient, self).__init__()
         self.net = net
+        self.keys = net.state_dict().keys()
         self.train_loader = train_loader
         self.epoch = epoch
         self.lossf = lossf
@@ -24,7 +26,7 @@ class FedAvgClient(fl.client.NumPyClient):
         return [val.cpu().numpy() for _, val in self.net.state_dict().items()]
 
     def set_parameters(self, parameters):
-        params_dict = zip(self.net.state_dict().keys(), parameters)
+        params_dict = zip(self.keys, parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         self.net.load_state_dict(state_dict, strict=True)
     def fit(self, parameters, config):
@@ -41,13 +43,17 @@ if __name__ =="__main__":
     warnings.filterwarnings("ignore")
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args = Federatedparser()
-    
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
     valid_ids = os.listdir(os.path.join(args.wesad_path, "valid"))
-    valid_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, "valid", id, id+".pkl") for id in valid_ids])
+    valid_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, "valid", id, id+".pkl") for id in valid_ids], test_mode=args.test)
     valid_loader = DataLoader(valid_data, batch_size=1, shuffle=False, collate_fn= lambda x:x)
     
     train_ids = os.listdir(os.path.join(args.wesad_path, f"client{args.id}"))
-    train_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, f"client{args.id}", id, id+".pkl") for id in train_ids])
+    train_data = CustomDataset(pkl_files=[os.path.join(args.wesad_path, f"client{args.id}", id, id+".pkl") for id in train_ids],test_mode=args.test)
     train_loader = DataLoader(train_data, batch_size=1, shuffle=True, collate_fn= lambda x:x)
     
     net = LSTMModel(3, 4, 1, 2)

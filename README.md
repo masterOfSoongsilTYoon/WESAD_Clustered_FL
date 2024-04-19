@@ -56,22 +56,22 @@ WESAD 데이터셋은 Wearable Stress Affect Detaction의 약자로, 특정 실�
 __Centralized Learning__
     
     python train.py -e 10 -w ./WESAD -v CentralNet -p ./Models/CentralNet/net.pt
--e: epoch, -w WESAD 폴더(train, valid, test 폴더 함유해야함), -v Model version or Project version, -p Pretrained model path, -s Seed number(default 2024)
+-e: epoch, -w WESAD 폴더(train, valid, test 폴더 함유해야함), -v Model version or Project version, -p Pretrained model path, -s Seed number(default 2024) -t TestMode(True or False)
 
 __Federated Learning__
   
 FedAvg Server
     
     python FedAvgServer.py -v FedAvg -w ./WESAD -r 10 -p ./Models/FedAvg/net.pt
--v Server version, -w WESAD 폴더(train, valid, test 폴더 함유해야함), -r Round number, -p Pretrained model path, -s Seed number(default 2024)
+-v Server version, -w WESAD 폴더(train, valid, test 폴더 함유해야함), -r Round number, -p Pretrained model path, -s Seed number(default 2024) -t TestMode(True or False)
 
 Clustered FedAvg Server
     
-    python ClusteredFedAvgServer.py -v FedAvg -w ./WESAD -r 10 -p ./Models/FedAvg/net.pt
+    python ClusteredFedAvgServer.py -v FedAvg -w ./WESAD -r 10 -p ./Models/FedAvg/net.pt -t (True or False)
 
 Client Command
 
-    python client.py -v FedAvg -w ./WESAD -i 1 -e 3
+    python client.py -v FedAvg -w ./WESAD -i 1 -e 3 -t (True or False)
 
 ## Performance Table
  - __Stress vs Non-Stress__ (will be updated)
@@ -80,19 +80,19 @@ Client Command
     <td>CL or FL</td>
     <td>Accuracy</td>
     <td>F1-score</td>
-    
+    <td>Loss</td>
   </tr>
   <tr>
     <td>CL(Centralized Learning)</td>
-    <td>76.49%</td>
-    <td>43.33%</td>
-    
+    <td>76.50%</td>
+    <td>43.34%</td>
+    <td>0.5397</td>
   </tr>
   <tr>
     <td>Fed-Avg</td>
-    <td>00.00%</td>
-    <td>00.00%</td>
-    
+    <td>76.49%</td>
+    <td>43.34%</td>
+    <td>0.5622</td>
   </tr>
   <tr>
     <td>Clustered Fed-Avg</td>

@@ -7,12 +7,12 @@ from sklearn.preprocessing import StandardScaler
 #     return lis
 
 class CustomDataset(object):
-    def __init__(self, pkl_files:list|tuple) -> None:
+    def __init__(self, pkl_files:list|tuple, test_mode=False) -> None:
         self.files = []
         for file in pkl_files:
             with open(file, "rb") as fil:
                 self.files.append(pickle.load(fil,encoding="latin1"))
-        
+        self.test_mode = test_mode
     def Normalization(self, df):
         standard_scaler = StandardScaler()
         return standard_scaler.fit_transform(df)
@@ -20,10 +20,16 @@ class CustomDataset(object):
             
     def __getitem__(self, i):
         self.file = self.files[i]
-        ACC=self.file['signal']['chest']["ACC"][:, 0]
-        label= self.file['label']
-        EDA=self.file['signal']['chest']['EDA']
-        Temp=self.file['signal']['chest']['Temp']
+        if self.test_mode:
+            ACC=self.file['signal']['chest']["ACC"][:10, 0]
+            label= self.file['label'][:10]
+            EDA=self.file['signal']['chest']['EDA'][:10]
+            Temp=self.file['signal']['chest']['Temp'][:10]
+        else:
+            ACC=self.file['signal']['chest']["ACC"][:, 0]
+            label= self.file['label']
+            EDA=self.file['signal']['chest']['EDA']
+            Temp=self.file['signal']['chest']['Temp']
         
         X=self.Normalization([(float(acc),float(eda), float(temp)) for acc , eda, temp in zip(ACC, EDA, Temp)])
         
